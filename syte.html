@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Julia Set NFT Carousel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(72, 219, 251, 0.05) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        .sky-section {
+            position: relative;
+            min-height: 40vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 107, 107, 0.3);
+            position: relative;
+        }
+
+        .tree-branches {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 200px;
+            z-index: 1;
+        }
+
+        .branch {
+            position: absolute;
+            background: linear-gradient(45deg, transparent, rgba(254, 202, 87, 0.3), transparent);
+            border-radius: 50px;
+            transform-origin: bottom center;
+        }
+
+        .branch-1 { width: 120px; height: 8px; top: 80px; left: 140px; transform: rotate(-30deg); }
+        .branch-2 { width: 100px; height: 6px; top: 70px; left: 160px; transform: rotate(-15deg); }
+        .branch-3 { width: 90px; height: 6px; top: 70px; right: 160px; transform: rotate(15deg); }
+        .branch-4 { width: 110px; height: 7px; top: 80px; right: 140px; transform: rotate(30deg); }
+
+        .header p {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .underworld-section {
+            position: relative;
+            background: linear-gradient(to bottom, 
+                rgba(15, 12, 41, 0.9) 0%,
+                rgba(23, 18, 58, 0.95) 30%,
+                rgba(36, 34, 62, 1) 100%);
+            border-radius: 50px 50px 0 0;
+            padding: 80px 40px 40px;
+            margin-top: -30px;
+            border-top: 3px solid rgba(254, 202, 87, 0.3);
+            box-shadow: 
+                0 -20px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .roots {
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 150px;
+            z-index: 1;
+        }
+
+        .root {
+            position: absolute;
+            background: linear-gradient(to bottom, 
+                rgba(254, 202, 87, 0.6),
+                rgba(36, 34, 62, 0.8));
+            border-radius: 50px;
+            transform-origin: top center;
+        }
+
+        .root-1 { width: 8px; height: 80px; left: 120px; top: 0; transform: rotate(-5deg); }
+        .root-2 { width: 6px; height: 100px; left: 140px; top: 0; transform: rotate(-2deg); }
+        .root-3 { width: 7px; height: 90px; left: 160px; top: 0; transform: rotate(1deg); }
+        .root-4 { width: 6px; height: 110px; right: 140px; top: 0; transform: rotate(2deg); }
+        .root-5 { width: 8px; height: 85px; right: 120px; top: 0; transform: rotate(5deg); }
+
+        .carousel-section {
+            margin: 50px 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            perspective: 1200px;
+            margin-bottom: 50px;
+        }
+
+        .carousel {
+            position: absolute;
+            width: 300px;
+            height: 400px;
+            transform-style: preserve-3d;
+            animation: rotate 40s infinite linear;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .carousel:hover {
+            animation-play-state: paused;
+        }
+
+        .carousel-item {
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            transition: all 0.5s ease;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+
+        .carousel-item:hover {
+            transform: scale(1.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+            z-index: 100;
+        }
+
+        .carousel-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .carousel-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .item-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+            color: white;
+            padding: 15px 10px 10px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .carousel-item:hover .item-info {
+            transform: translateY(0);
+        }
+
+        .carousel-item:nth-child(1) { transform: rotateY(0deg) translateZ(500px); }
+        .carousel-item:nth-child(2) { transform: rotateY(30deg) translateZ(500px); }
+        .carousel-item:nth-child(3) { transform: rotateY(60deg) translateZ(500px); }
+        .carousel-item:nth-child(4) { transform: rotateY(90deg) translateZ(500px); }
+        .carousel-item:nth-child(5) { transform: rotateY(120deg) translateZ(500px); }
+        .carousel-item:nth-child(6) { transform: rotateY(150deg) translateZ(500px); }
+        .carousel-item:nth-child(7) { transform: rotateY(180deg) translateZ(500px); }
+        .carousel-item:nth-child(8) { transform: rotateY(210deg) translateZ(500px); }
+        .carousel-item:nth-child(9) { transform: rotateY(240deg) translateZ(500px); }
+        .carousel-item:nth-child(10) { transform: rotateY(270deg) translateZ(500px); }
+        .carousel-item:nth-child(11) { transform: rotateY(300deg) translateZ(500px); }
+        .carousel-item:nth-child(12) { transform: rotateY(330deg) translateZ(500px); }
+
+        .info-section {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 50px 40px;
+            margin: 40px 0;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            z-index: 2;
+        }
+
+        .info-section h2 {
+            color: #feca57;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-align: center;
+            background: linear-gradient(45deg, #feca57, #ff9ff3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(254, 202, 87, 0.3);
+        }
+
+        .info-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .info-text {
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.7;
+            font-size: 1.1rem;
+        }
+
+        .info-text p {
+            margin-bottom: 20px;
+        }
+
+        .collection-details {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 4px solid #48dbfb;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .collection-details::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(72, 219, 251, 0.5), 
+                transparent);
+        }
+
+        .collection-details h3 {
+            color: #feca57;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .roadmap-list {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.8;
+            list-style: none;
+            padding: 0;
+            position: relative;
+        }
+
+        .roadmap-item {
+            position: relative;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 3px solid #ff9ff3;
+            transition: all 0.3s ease;
+        }
+
+        .roadmap-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+            border-left-color: #ff6b6b;
+        }
+
+        .roadmap-item::before {
+            content: '✦';
+            position: absolute;
+            left: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #48dbfb;
+            font-size: 1.2rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            min-width: 140px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.1), 
+                transparent);
+            transition: left 0.5s ease;
+        }
+
+        .stat-item:hover::before {
+            left: 100%;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 25px rgba(72, 219, 251, 0.2);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #48dbfb;
+            display: block;
+            text-shadow: 0 5px 15px rgba(72, 219, 251, 0.3);
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: translate(-50%, -50%) rotateY(0deg);
+            }
+            to {
+                transform: translate(-50%, -50%) rotateY(360deg);
+            }
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .star {
+            position: fixed;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .tree-branches {
+                width: 300px;
+            }
+            
+            .carousel-container {
+                height: 500px;
+            }
+            
+            .carousel-item {
+                width: 180px;
+                height: 180px;
+            }
+            
+            .underworld-section {
+                padding: 60px 20px 30px;
+            }
+            
+            .info-section {
+                padding: 30px 20px;
+            }
+            
+            .info-content {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+            
+            .info-section h2 {
+                font-size: 2rem;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+            
+            .stat-item {
+                min-width: 120px;
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .carousel-container {
+                height: 400px;
+            }
+            
+            .stats {
+                gap: 10px;
+            }
+            
+            .stat-item {
+                min-width: 100px;
+                padding: 12px;
+            }
+            
+            .underworld-section {
+                border-radius: 30px 30px 0 0;
+                padding: 50px 15px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sky-section">
+            <div class="tree-branches">
+                <div class="branch branch-1"></div>
+                <div class="branch branch-2"></div>
+                <div class="branch branch-3"></div>
+                <div class="branch branch-4"></div>
+            </div>
+            <div class="header">
+                <h1>Julia Set NFT Collection</h1>
+            </div>
+        </div>
+
+        <div class="carousel-section">
+            <div class="carousel-container">
+                <div class="carousel" id="carousel"></div>
+            </div>
+        </div>
+
+        <div class="underworld-section">
+            <div class="roots">
+                <div class="root root-1"></div>
+                <div class="root root-2"></div>
+                <div class="root root-3"></div>
+                <div class="root root-4"></div>
+                <div class="root root-5"></div>
+            </div>
+
+            <div class="info-section">
+                <h2>About the Collection</h2>
+                
+                <div class="info-content">
+                    <div class="info-text">
+                        <p>Welcome to the exclusive Julia Set NFT collection, where mathematics transforms into breathtaking visual art. Each NFT represents a unique fractal pattern generated from the complex mathematical equation zₙ₊₁ = zₙ² + c.</p>
+                        
+                        <p>These intricate patterns emerge from the chaotic beauty of complex numbers, creating infinite variations of mathematical art. No two fractals are alike, making each piece in our collection truly one-of-a-kind.</p>
+                        
+                        <p>Our algorithm explores the mathematical landscape to capture the most stunning visual representations of the Julia Set, offering you a piece of infinite mathematical beauty.</p>
+                    </div>
+                    
+                    <div class="collection-details">
+                        <h3>ROADMAP</h3>
+                        <ul class="roadmap-list">
+                            <li class="roadmap-item">Q4 2025 - Project Launch</li>
+                            <li class="roadmap-item">NFT Minting & Distribution</li>
+                            <li class="roadmap-item">Community Building</li>
+                            <li class="roadmap-item">Partnerships & Collaborations</li>
+                            <li class="roadmap-item">Future Expansions</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-number">2048</span>
+                        <span class="stat-label">Unique NFTs</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">100%</span>
+                        <span class="stat-label">Algorithmic Art</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">∞</span>
+                        <span class="stat-label">Mathematical Beauty</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const carousel = document.getElementById('carousel');
+        const totalImages = 12;
+
+        const nftNumbers = Array.from({length: 2048 - 1978 + 1}, (_, i) => i + 1978);
+
+        function getRandomNFT() {
+            return nftNumbers[Math.floor(Math.random() * nftNumbers.length)];
+        }
+
+        function getUniqueNFTs(count) {
+            const shuffled = [...nftNumbers].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+        }
+
+        function initializeCarousel() {
+            const selectedNFTs = getUniqueNFTs(totalImages);
+            
+            selectedNFTs.forEach((nftNumber, index) => {
+                const carouselItem = document.createElement('div');
+                carouselItem.className = 'carousel-item';
+                
+                const img = document.createElement('img');
+                img.src = `Julia_Fractal_Images/julia_${nftNumber}.png`;
+                img.alt = `Julia Fractal ${nftNumber}`;
+                img.loading = 'lazy';
+                
+                const itemInfo = document.createElement('div');
+                itemInfo.className = 'item-info';
+                itemInfo.innerHTML = `<h3>Julia #${nftNumber}</h3><p>Mathematical Artwork</p>`;
+                
+                carouselItem.appendChild(img);
+                carouselItem.appendChild(itemInfo);
+                carousel.appendChild(carouselItem);
+
+                carouselItem.addEventListener('click', function() {
+                    window.open(img.src, '_blank');
+                });
+            });
+        }
+
+        setInterval(() => {
+            const items = document.querySelectorAll('.carousel-item img');
+            const infoItems = document.querySelectorAll('.item-info h3');
+            
+            const newNFTs = getUniqueNFTs(totalImages);
+            
+            items.forEach((item, index) => {
+                const newNumber = newNFTs[index];
+                item.src = `./Julia_Fractal_Images/julia_${newNumber}.png`;
+                infoItems[index].textContent = `Julia #${newNumber}`;
+            });
+        }, 10000);
+
+        function createStars() {
+            const starsContainer = document.body;
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.width = Math.random() * 3 + 1 + 'px';
+                star.style.height = star.style.width;
+                star.style.left = Math.random() * 100 + 'vw';
+                star.style.top = Math.random() * 100 + 'vh';
+                star.style.animationDelay = Math.random() * 5 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        initializeCarousel();
+        createStars();
+    </script>
+</body>
+</html>
